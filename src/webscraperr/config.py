@@ -86,6 +86,8 @@ def validate_config(config):
         raise ValueError("SCRAPER REQUEST_DELAY must be a float")
     if request_delay <= 0:
         raise ValueError("SCRAPER REQUEST_DELAY must be greater than 0")
+    
+    scraper_config['REQUEST_DELAY'] = request_delay
 
     config["DRIVER"] = driver_config
     config["DATABASE"] = database_config
