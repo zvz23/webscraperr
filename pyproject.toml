@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "webscraperr"
+dependencies = [
+  'requests',
+  'parsel',
+  'mysql-connector-python',
+  'undetected-chromedriver'
+]
+version = "0.0.5"
+authors = [
+  { name="Ziegfred Zorrilla", email="ziegfredzorrilla23@gmail.com" },
+]
+description = "A package for web scraping"
+readme = "README.md"
+requires-python = ">=3.11.2"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
