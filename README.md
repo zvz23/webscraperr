@@ -1,7 +1,7 @@
 
 # Webscraperr
 
-This Python library is designed to facilitate the common workflow of web scraping, particularly for e-commerce websites. It provides a structured framework where users can define their own logic for gathering product URLs, parsing individual product pages, and selecting the next page. The URLs and product info are saved directly to a database. It supports various databases such as SQLite and MySQL.
+This Python library is designed to facilitate the common workflow of web scraping, particularly for e-commerce websites. It provides a structured framework where users can define their own functions for gathering product URLs, parsing individual product pages, and selecting the next page. The URLs and product info are saved directly to a database. It supports various databases such as SQLite and MySQL.
 
 
 
