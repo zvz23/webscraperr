@@ -96,7 +96,7 @@ class WebScraperRequest(ExportMixin):
                             time.sleep(self.config['SCRAPER']['REQUEST_DELAY'])
     
     def scrape_items_infos(self):
-        if self.parse_info_func:
+        if self.parse_info_func is None:
             raise ParserNotSetException()
         
         items = []
