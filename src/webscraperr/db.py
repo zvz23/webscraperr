@@ -1,24 +1,24 @@
 import sqlite3
 from mysql.connector import connect
 
-def get_db_class_by_config(config: dict):
-    if config['DATABASE']['TYPE'] == 'MYSQL':
+def get_db_class_by_config(database_config: dict):
+    if database_config['TYPE'] == 'MYSQL':
         return WebScraperDBMySQL
-    elif config['DATABASE']['TYPE'] == 'SQLITE':
+    elif database_config['TYPE'] == 'SQLITE':
         return WebScraperDBSqlite
 
-def init_mysql(config: dict):
-    temp_auth = config['AUTH'].copy()
+def init_mysql(database_config: dict):
+    temp_auth = database_config['AUTH'].copy()
     if 'database' in temp_auth:
         del temp_auth['database']
     with connect(**temp_auth) as conn:
         cursor = conn.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {config['DATABASE']}")
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database_config['DATABASE']}")
 
-    with connect(**config['AUTH']) as conn:
+    with connect(**database_config['AUTH']) as conn:
         cursor = conn.cursor()
         cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS`{config['DATABASE']}`.`{config['TABLE']}` (
+            CREATE TABLE IF NOT EXISTS`{database_config['DATABASE']}`.`{database_config['TABLE']}` (
             `ID` INT NOT NULL AUTO_INCREMENT,
             `URL` VARCHAR(255) NOT NULL,
             `INFO` JSON NULL,
@@ -26,10 +26,10 @@ def init_mysql(config: dict):
             UNIQUE INDEX `URL_UNIQUE` (`URL` ASC) VISIBLE);
         """)
 
-def init_sqlite(config: dict):
-    with sqlite3.connect(config['DATABASE']) as conn:
+def init_sqlite(database_config: dict):
+    with sqlite3.connect(database_config['DATABASE']) as conn:
         conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS {config['TABLE']} (
+            CREATE TABLE IF NOT EXISTS {database_config['TABLE']} (
         ID   INTEGER NOT NULL
                     PRIMARY KEY AUTOINCREMENT,
         URL  TEXT    NOT NULL
