@@ -1,4 +1,5 @@
-from selenium.webdriver.chrome.options import Options
+from seleniumwire.undetected_chromedriver.v2 import ChromeOptions
+from uuid import uuid4
 
 def get_default_config():
     default_config = {
@@ -20,6 +21,10 @@ def get_default_config():
         },
         "SCRAPER": {
             "REQUEST_DELAY": 1.5
+        },
+        "EXPORT": {
+            "FILENAME": f"{uuid4()}.csv",
+            "TYPE": "CSV"
         }
     }
     return default_config
@@ -32,7 +37,7 @@ def validate_config(config):
         raise ValueError("Invalid DRIVER configuration")
 
     if "OPTIONS" in driver_config and driver_config["OPTIONS"] is not None:
-        if not isinstance(driver_config["OPTIONS"], Options):
+        if not isinstance(driver_config["OPTIONS"], ChromeOptions):
             raise ValueError("DRIVER OPTIONS must be an instance of Option")
     else:
         driver_config["OPTIONS"] = None
@@ -89,6 +94,28 @@ def validate_config(config):
     
     scraper_config['REQUEST_DELAY'] = request_delay
 
+    # Validate EXPORT section
+    export_config = config.get("EXPORT", {})
+    if not isinstance(export_config, dict):
+        raise ValueError("Invalid EXPORT configuration")
+
+    filename = export_config.get("FILENAME")
+    if filename is None:
+        filename = str(uuid4())
+    elif not isinstance(filename, str) or not filename:
+        raise ValueError("EXPORT FILENAME must be a string")
+
+    export_type = export_config.get("TYPE", "csv")
+    if not isinstance(export_type, str):
+        raise ValueError("EXPORT TYPE must be a string")
+    
+    if export_type not in ["csv", "json"]:
+        raise ValueError("EXPORT TYPE must be 'csv' or 'json'")
+
+    export_config["FILENAME"] = filename
+    export_config["TYPE"] = export_type
+
     config["DRIVER"] = driver_config
     config["DATABASE"] = database_config
     config["SCRAPER"] = scraper_config
+    config["EXPORT"] = export_config
