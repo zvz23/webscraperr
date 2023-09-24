@@ -1,7 +1,7 @@
 
 # Webscraperr
 
-This Python library is designed to facilitate the common workflow of web scraping, particularly for e-commerce websites. It provides a structured framework where users can define their own functions for gathering product URLs, parsing individual product pages, and selecting the next page. The URLs and product info are saved directly to a database. It supports various databases such as SQLite and MySQL.
+This Python library is designed to facilitate the common workflow of web scraping, particularly for e-commerce websites. It provides a structured framework where users can define their own logic for gathering product URLs, parsing individual product pages, and selecting the next page. The URLs and product info are saved directly to a database. It supports various databases such as SQLite and MySQL.
 
 
 
@@ -62,14 +62,14 @@ def parse_info_func(selector):
     return info
 
 
-scraper = WebScraperRequest(config)
-scraper.get_items_urls_func = lambda selector : [urljoin(BASE_URL, i) for i in selector.css(".thumbnail a::attr(href)").getall()]
-scraper.get_next_page_func = get_next_page_func
-scraper.parse_info_func = parse_info_func
+with WebScraperRequest(config) as scraper:
+    scraper.get_items_urls_func = lambda selector : [urljoin(BASE_URL, i) for i in selector.css(".thumbnail a::attr(href)").getall()]
+    scraper.get_next_page_func = get_next_page_func
+    scraper.parse_info_func = parse_info_func
 
-scraper.scrape_items_urls(urls) # This will start the scraping of products urls
+    scraper.scrape_items_urls(urls) # This will start the scraping of products urls
 
-scraper.scrape_items_infos() # This will navigate to the product page and parse the html
+    scraper.scrape_items_infos() # This will navigate to the product page and parse the html
 
 ```
 
