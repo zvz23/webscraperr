@@ -6,7 +6,8 @@ def get_default_config():
         "DRIVER": {
             "OPTIONS": None,
             "HEADLESS": False,
-            "PROFILE_NAME": "Test Profile"
+            "PROFILE_NAME": "Test Profile",
+            "AFTER_GET_DELAY": None
         },
         "DATABASE": {
             "TYPE": "MYSQL",
@@ -53,6 +54,17 @@ def validate_config(config):
             raise ValueError("DRIVER PROFILE_NAME must be a string")
     else:
         driver_config["PROFILE_NAME"] = "Test Profile"
+
+    if "AFTER_GET_DELAY" in driver_config:
+        after_get_delay = driver_config.get('AFTER_GET_DELAY')
+        if after_get_delay is not None:
+            if type(after_get_delay) != float:
+                raise ValueError("DRIVER AFTER_GET_DELAY must be a float")
+            else:
+                if after_get_delay <= 0:
+                    raise ValueError("SCRAPER AFTER_GET_DELAY must be greater than 0")
+    else:
+        driver_config["AFTER_GET_DELAY"] = None
 
     # Validate DATABASE section
     database_config = config.get("DATABASE", {})

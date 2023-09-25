@@ -143,6 +143,8 @@ class WebScraperChrome(ExportMixin):
         
         for url in urls:
             self.driver.get(url)
+            if self.config['DRIVER']['AFTER_GET_DELAY']:
+                time.sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
             while True:
                 print("SCRAPING URLS", self.driver.current_url)
                 items_urls = [[i] for i in self.get_items_urls_func(self.driver)]
@@ -175,6 +177,8 @@ class WebScraperChrome(ExportMixin):
         for item in items:
             print("GETTING INFO ", item['URL'])
             self.driver.get(item['URL'])
+            if self.config['DRIVER']['AFTER_GET_DELAY']:
+                time.sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
             info = self.parse_info_func(self.driver)
             if info is None:
                 print("NO INFO ", item['URL'])
