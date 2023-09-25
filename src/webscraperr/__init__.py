@@ -58,6 +58,7 @@ class WebScraperRequest(ExportMixin):
     def __init__(self, config: dict):
         self.config = config
         self.get_items_urls_func : Callable[[parsel.Selector], List[str]] = None
+        self.get_items_urls_and_infos_func: Callable[[parsel.Selector], List[dict]] = None
         self.get_next_page_func : Callable[[parsel.Selector], str] = None
         self.parse_info_func : Callable[[parsel.Selector], Union[Dict, List(Dict)]] = None
         self.session: requests.Session = None
@@ -70,7 +71,7 @@ class WebScraperRequest(ExportMixin):
         self.session.close()
 
     def scrape_items_urls(self, urls: list):
-        if self.get_items_urls_func is None:
+        if self.get_items_urls_func is None and self.get_items_urls_and_infos_func is None:
             raise ParserNotSetException()
         with requests.Session() as s:
             for url in urls:
@@ -82,13 +83,26 @@ class WebScraperRequest(ExportMixin):
                         print("FAILED GETTING URLS ", next_page)
                         continue
                     selector = parsel.Selector(text=response.text)
-                    items_urls = [[i] for i in self.get_items_urls_func(selector)]
-                    if len(items_urls) > 0:
-                        with get_db_class_by_config(self.config['DATABASE'])(self.config['DATABASE']) as conn:
-                            conn.save_urls(items_urls)
-                            print(f"FOUND {len(items_urls)} URLS IN", next_page)
-                    else:
-                        print("NO URLS FOUND IN", next_page)
+                    db_class = get_db_class_by_config(self.config['DATABASE'])
+                    if self.get_items_urls_func:
+                        items_urls = [[i] for i in self.get_items_urls_func(selector)]
+                        if len(items_urls) > 0:
+                            with db_class(self.config['DATABASE']) as conn:
+                                conn.save_urls(items_urls)
+                                print(f"FOUND {len(items_urls)} URLS IN", next_page)
+                        else:
+                            print("NO URLS FOUND IN", next_page)
+
+                    if self.get_items_urls_and_infos_func:
+                        items_urls_and_infos = [[i] for i in self.get_items_urls_and_infos_func(selector)]
+                        if len(items_urls_and_infos) > 0:
+                            with db_class(self.config['DATABASE']) as conn:
+                                conn.save_url_and_info_many(items_urls_and_infos)
+                                print(f"FOUND {len(items_urls_and_infos)} URLS AND INFOS IN ", url)
+                        else:
+                            print("NO URLS AND INFOS FOUND IN ", url)
+
+
                     next_page = None
                     if self.get_next_page_func:
                         next_page = self.get_next_page_func(selector)
@@ -123,12 +137,13 @@ class WebScraperChrome(ExportMixin):
     def __init__(self, config: dict):
         self.config = config
         self.get_items_urls_func : Callable[[uc.Chrome], List[str]] = None
+        self.get_items_urls_and_infos_func: Callable[[uc.Chrome], List[dict]] = None
         self.get_next_page_func : Callable[[uc.Chrome], Union[str, WebElement]] = None
         self.parse_info_func : Callable[[uc.Chrome], Union[Dict, List(Dict)]] = None
         self.driver : uc.Chrome = None
 
     def __enter__(self):
-        self.driver = get_driver(self.config)
+        self.driver = get_driver(self.config['DRIVER'])
         return self
     
     def __exit__(self, type, value, traceback):
@@ -138,7 +153,7 @@ class WebScraperChrome(ExportMixin):
             print("There was a problem closing the chrome instances. You will need to close them manually")
 
     def scrape_items_urls(self, urls: list):
-        if self.get_items_urls_func is None:
+        if self.get_items_urls_func is None and self.get_items_urls_and_infos_func:
             raise ParserNotSetException()
         
         for url in urls:
@@ -147,13 +162,25 @@ class WebScraperChrome(ExportMixin):
                 time.sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
             while True:
                 print("SCRAPING URLS", self.driver.current_url)
-                items_urls = [[i] for i in self.get_items_urls_func(self.driver)]
-                if len(items_urls) > 0:
-                    with get_db_class_by_config(self.config['DATABASE'])(self.config['DATABASE']) as conn:
-                        conn.save_urls(items_urls)
-                        print(f"FOUND {len(items_urls)} URLS IN", url)
-                else:
-                    print("NO URLS FOUND IN", url)
+                db_class = get_db_class_by_config(self.config['DATABASE'])
+                if self.get_items_urls_func:
+                    items_urls = [[i] for i in self.get_items_urls_func(self.driver)]
+                    if len(items_urls) > 0:
+                        with db_class(self.config['DATABASE']) as conn:
+                            conn.save_urls(items_urls)
+                            print(f"FOUND {len(items_urls)} URLS IN", url)
+                    else:
+                        print("NO URLS FOUND IN ", url)
+                
+                if self.get_items_urls_and_infos_func:
+                    items_urls_and_infos = [[i] for i in self.get_items_urls_and_infos_func(self.driver)]
+                    if len(items_urls_and_infos) > 0:
+                        with db_class(self.config['DATABASE']) as conn:
+                            conn.save_url_and_info_many(items_urls_and_infos)
+                            print(f"FOUND {len(items_urls_and_infos)} URLS AND INFOS IN ", url)
+                    else:
+                        print("NO URLS AND INFOS FOUND IN ", url)
+
                 if self.get_next_page_func:
                     next_page = self.get_next_page_func(self.driver)
                     if isinstance(next_page, str):
