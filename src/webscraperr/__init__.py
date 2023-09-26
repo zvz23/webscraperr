@@ -77,7 +77,7 @@ class WebScraperRequest(ExportMixin):
             for url in urls:
                 next_page = url[:]
                 while next_page:
-                    print("SCRAPING URLS", next_page)
+                    print("SCRAPING URLS ", next_page)
                     response = s.get(next_page)
                     if not response.ok:
                         print("FAILED GETTING URLS ", next_page)
@@ -85,22 +85,21 @@ class WebScraperRequest(ExportMixin):
                     db_class = get_db_class_by_config(self.config['DATABASE'])
                     if self.get_items_urls_func:
                         items_urls = [[i] for i in self.get_items_urls_func(response)]
-                        if len(items_urls) > 0:
+                        if items_urls:
                             with db_class(self.config['DATABASE']) as conn:
                                 conn.save_urls(items_urls)
                                 print(f"FOUND {len(items_urls)} URLS IN", next_page)
                         else:
-                            print("NO URLS FOUND IN", next_page)
+                            print("NO URLS FOUND IN ", next_page)
 
                     if self.get_items_urls_and_infos_func:
                         items_urls_and_infos = [[i[0], json.dumps(i[1])] for i in self.get_items_urls_and_infos_func(response)]
-                        if len(items_urls_and_infos) > 0:
+                        if items_urls_and_infos:
                             with db_class(self.config['DATABASE']) as conn:
                                 conn.save_url_and_info_many(items_urls_and_infos)
                                 print(f"FOUND {len(items_urls_and_infos)} URLS AND INFOS IN ", url)
                         else:
                             print("NO URLS AND INFOS FOUND IN ", url)
-
 
                     next_page = None
                     if self.get_next_page_func:
@@ -123,7 +122,7 @@ class WebScraperRequest(ExportMixin):
                     print("FAILED GETTING INFO ", item['URL'])
                     continue
                 info = self.parse_info_func(response)
-                if info is None:
+                if info:
                     print("NO INFO ", item['URL'])
                     continue
                 with get_db_class_by_config(self.config['DATABASE'])(self.config['DATABASE']) as conn:
