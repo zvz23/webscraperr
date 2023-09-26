@@ -57,10 +57,10 @@ class ExportMixin:
 class WebScraperRequest(ExportMixin):
     def __init__(self, config: dict):
         self.config = config
-        self.get_items_urls_func : Callable[[parsel.Selector], List[str]] = None
-        self.get_items_urls_and_infos_func: Callable[[parsel.Selector], List[dict]] = None
-        self.get_next_page_func : Callable[[parsel.Selector], str] = None
-        self.parse_info_func : Callable[[parsel.Selector], Union[Dict, List(Dict)]] = None
+        self.get_items_urls_func : Callable[[requests.Response], List[str]] = None
+        self.get_items_urls_and_infos_func: Callable[[requests.Response], List[Tuple[str, Dict]]] = None
+        self.get_next_page_func : Callable[[requests.Response], str] = None
+        self.parse_info_func : Callable[[requests.Response], Dict] = None
         self.session: requests.Session = None
 
     def __enter__(self):
@@ -82,10 +82,9 @@ class WebScraperRequest(ExportMixin):
                     if not response.ok:
                         print("FAILED GETTING URLS ", next_page)
                         continue
-                    selector = parsel.Selector(text=response.text)
                     db_class = get_db_class_by_config(self.config['DATABASE'])
                     if self.get_items_urls_func:
-                        items_urls = [[i] for i in self.get_items_urls_func(selector)]
+                        items_urls = [[i] for i in self.get_items_urls_func(response)]
                         if len(items_urls) > 0:
                             with db_class(self.config['DATABASE']) as conn:
                                 conn.save_urls(items_urls)
@@ -94,7 +93,7 @@ class WebScraperRequest(ExportMixin):
                             print("NO URLS FOUND IN", next_page)
 
                     if self.get_items_urls_and_infos_func:
-                        items_urls_and_infos = [[i] for i in self.get_items_urls_and_infos_func(selector)]
+                        items_urls_and_infos = [[i[0], json.dumps(i[1])] for i in self.get_items_urls_and_infos_func(response)]
                         if len(items_urls_and_infos) > 0:
                             with db_class(self.config['DATABASE']) as conn:
                                 conn.save_url_and_info_many(items_urls_and_infos)
@@ -105,7 +104,7 @@ class WebScraperRequest(ExportMixin):
 
                     next_page = None
                     if self.get_next_page_func:
-                        next_page = self.get_next_page_func(selector)
+                        next_page = self.get_next_page_func(response)
                         if next_page:
                             time.sleep(self.config['SCRAPER']['REQUEST_DELAY'])
     
@@ -123,12 +122,13 @@ class WebScraperRequest(ExportMixin):
                 if not response.ok:
                     print("FAILED GETTING INFO ", item['URL'])
                     continue
-                selector = parsel.Selector(text=response.text)
-                info = self.parse_info_func(selector)
+                info = self.parse_info_func(response)
                 if info is None:
                     print("NO INFO ", item['URL'])
                     continue
                 with get_db_class_by_config(self.config['DATABASE'])(self.config['DATABASE']) as conn:
+                    if self.config['DATABASE']['UPDATE_INFO'] and item['INFO'] is not None:
+                        info.update(json.loads(item['INFO']))
                     conn.set_info_by_id(item['ID'], json.dumps(info))
                     print("SAVED INFO ", item['URL'])
                 time.sleep(self.config['SCRAPER']['REQUEST_DELAY'])
@@ -137,9 +137,9 @@ class WebScraperChrome(ExportMixin):
     def __init__(self, config: dict):
         self.config = config
         self.get_items_urls_func : Callable[[uc.Chrome], List[str]] = None
-        self.get_items_urls_and_infos_func: Callable[[uc.Chrome], List[dict]] = None
+        self.get_items_urls_and_infos_func: Callable[[uc.Chrome], List[Tuple[str, Dict]]] = None
         self.get_next_page_func : Callable[[uc.Chrome], Union[str, WebElement]] = None
-        self.parse_info_func : Callable[[uc.Chrome], Union[Dict, List(Dict)]] = None
+        self.parse_info_func : Callable[[uc.Chrome], Dict] = None
         self.driver : uc.Chrome = None
 
     def __enter__(self):
@@ -153,7 +153,7 @@ class WebScraperChrome(ExportMixin):
             print("There was a problem closing the chrome instances. You will need to close them manually")
 
     def scrape_items_urls(self, urls: list):
-        if self.get_items_urls_func is None and self.get_items_urls_and_infos_func:
+        if self.get_items_urls_func is None and self.get_items_urls_and_infos_func is None:
             raise ParserNotSetException()
         
         for url in urls:
@@ -173,7 +173,7 @@ class WebScraperChrome(ExportMixin):
                         print("NO URLS FOUND IN ", url)
                 
                 if self.get_items_urls_and_infos_func:
-                    items_urls_and_infos = [[i] for i in self.get_items_urls_and_infos_func(self.driver)]
+                    items_urls_and_infos = [[i[0], json.dumps(i[1])] for i in self.get_items_urls_and_infos_func(self.driver)]
                     if len(items_urls_and_infos) > 0:
                         with db_class(self.config['DATABASE']) as conn:
                             conn.save_url_and_info_many(items_urls_and_infos)
@@ -211,6 +211,8 @@ class WebScraperChrome(ExportMixin):
                 print("NO INFO ", item['URL'])
                 continue
             with get_db_class_by_config(self.config['DATABASE'])(self.config['DATABASE']) as conn:
+                if self.config['DATABASE']['UPDATE_INFO'] and item['INFO'] is not None:
+                    info.update(json.loads(item['INFO']))
                 conn.set_info_by_id(item['ID'], json.dumps(info))
                 print("SAVED INFO ", item['URL'])
             time.sleep(self.config['SCRAPER']['REQUEST_DELAY'])
