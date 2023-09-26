@@ -18,7 +18,8 @@ def get_default_config():
                 "database": ""
             },
             "TABLE": "items",
-            "DATABASE": ""
+            "DATABASE": "",
+            "UPDATE_INFO": False
         },
         "SCRAPER": {
             "REQUEST_DELAY": 1.5
@@ -92,6 +93,12 @@ def validate_config(config):
     database_name = database_config.get("DATABASE")
     if not isinstance(database_name, str) or not database_name:
         raise ValueError("DATABASE NAME must be set")
+
+    update_info = database_config.get("UPDATE_INFO", False)
+    if not isinstance(update_info, bool):
+        raise ValueError("DATABASE UPDATE_INFO must be bool")
+    
+    database_config["UPDATE_INFO"] = update_info
 
     # Validate SCRAPER section
     scraper_config = config.get("SCRAPER", {})
