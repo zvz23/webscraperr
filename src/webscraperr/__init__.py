@@ -220,10 +220,3 @@ class WebScraperChrome:
                 with self.db_class(self.config['DATABASE']) as conn:
                     conn.set_info_by_id(item['ID'], json.dumps(info))
                     print("SAVED INFO ", item['URL'])
-
-
-
-
-        
-with WebScraperRequest() as scraper:
-    scraper.scrape_items_urls
