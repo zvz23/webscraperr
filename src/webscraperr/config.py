@@ -25,7 +25,6 @@ def get_default_config():
     }
     return default_config
 
-
 def validate_config(config):
     # Validate DRIVER section
     driver_config = config.get("DRIVER", {})
@@ -53,8 +52,8 @@ def validate_config(config):
     if "AFTER_GET_DELAY" in driver_config:
         after_get_delay = driver_config.get('AFTER_GET_DELAY')
         if after_get_delay is not None:
-            if type(after_get_delay) != float:
-                raise ValueError("DRIVER AFTER_GET_DELAY must be a float")
+            if type(after_get_delay) not in [int, float]:
+                raise ValueError("DRIVER AFTER_GET_DELAY must be an int or float")
             else:
                 if after_get_delay <= 0:
                     raise ValueError("DRIVER AFTER_GET_DELAY must be greater than 0")
@@ -93,12 +92,11 @@ def validate_config(config):
     if not isinstance(scraper_config, dict):
         raise ValueError("Invalid SCRAPER configuration")
 
-
     if "REQUEST_DELAY" in driver_config:
         request_delay = driver_config.get('REQUEST_DELAY')
         if request_delay is not None:
-            if type(request_delay) != float:
-                raise ValueError("SCRAPER REQUEST_DELAY must be a float")
+            if type(request_delay) not in [int, float]:
+                raise ValueError("SCRAPER REQUEST_DELAY must be an int or float")
             else:
                 if request_delay <= 0:
                     raise ValueError("SCRAPER REQUEST_DELAY must be greater than 0")
