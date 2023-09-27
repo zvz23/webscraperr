@@ -9,7 +9,7 @@ def get_default_config():
             "AFTER_GET_DELAY": None
         },
         "DATABASE": {
-            "TYPE": "MYSQL",
+            "TYPE": "SQLITE",
             "AUTH": {
                 "user": "",
                 "password": "",
