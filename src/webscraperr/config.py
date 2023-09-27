@@ -1,5 +1,4 @@
 from seleniumwire.undetected_chromedriver.v2 import ChromeOptions
-from uuid import uuid4
 
 def get_default_config():
     default_config = {
@@ -19,14 +18,9 @@ def get_default_config():
             },
             "TABLE": "items",
             "DATABASE": "",
-            "UPDATE_INFO": False
         },
         "SCRAPER": {
-            "REQUEST_DELAY": 1.5
-        },
-        "EXPORT": {
-            "FILENAME": f"{uuid4()}.csv",
-            "TYPE": "CSV"
+            "REQUEST_DELAY": None
         }
     }
     return default_config
@@ -63,7 +57,7 @@ def validate_config(config):
                 raise ValueError("DRIVER AFTER_GET_DELAY must be a float")
             else:
                 if after_get_delay <= 0:
-                    raise ValueError("SCRAPER AFTER_GET_DELAY must be greater than 0")
+                    raise ValueError("DRIVER AFTER_GET_DELAY must be greater than 0")
     else:
         driver_config["AFTER_GET_DELAY"] = None
 
@@ -94,47 +88,23 @@ def validate_config(config):
     if not isinstance(database_name, str) or not database_name:
         raise ValueError("DATABASE NAME must be set")
 
-    update_info = database_config.get("UPDATE_INFO", False)
-    if not isinstance(update_info, bool):
-        raise ValueError("DATABASE UPDATE_INFO must be bool")
-    
-    database_config["UPDATE_INFO"] = update_info
-
     # Validate SCRAPER section
     scraper_config = config.get("SCRAPER", {})
     if not isinstance(scraper_config, dict):
         raise ValueError("Invalid SCRAPER configuration")
 
-    request_delay = scraper_config.get("REQUEST_DELAY", 1.5)
-    if not isinstance(request_delay, (int, float)):
-        raise ValueError("SCRAPER REQUEST_DELAY must be a float")
-    if request_delay <= 0:
-        raise ValueError("SCRAPER REQUEST_DELAY must be greater than 0")
-    
-    scraper_config['REQUEST_DELAY'] = request_delay
 
-    # Validate EXPORT section
-    export_config = config.get("EXPORT", {})
-    if not isinstance(export_config, dict):
-        raise ValueError("Invalid EXPORT configuration")
-
-    filename = export_config.get("FILENAME")
-    if filename is None:
-        filename = str(uuid4())
-    elif not isinstance(filename, str) or not filename:
-        raise ValueError("EXPORT FILENAME must be a string")
-
-    export_type = export_config.get("TYPE", "csv")
-    if not isinstance(export_type, str):
-        raise ValueError("EXPORT TYPE must be a string")
-    
-    if export_type not in ["csv", "json"]:
-        raise ValueError("EXPORT TYPE must be 'csv' or 'json'")
-
-    export_config["FILENAME"] = filename
-    export_config["TYPE"] = export_type
+    if "REQUEST_DELAY" in driver_config:
+        request_delay = driver_config.get('REQUEST_DELAY')
+        if request_delay is not None:
+            if type(request_delay) != float:
+                raise ValueError("SCRAPER REQUEST_DELAY must be a float")
+            else:
+                if request_delay <= 0:
+                    raise ValueError("SCRAPER REQUEST_DELAY must be greater than 0")
+    else:
+        scraper_config["REQUEST_DELAY"] = None
 
     config["DRIVER"] = driver_config
     config["DATABASE"] = database_config
     config["SCRAPER"] = scraper_config
-    config["EXPORT"] = export_config
