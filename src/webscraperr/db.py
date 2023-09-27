@@ -1,6 +1,24 @@
 import sqlite3
 from mysql.connector import connect
+from enum import IntEnum
 
+class ItemsFilterByInfo(IntEnum):
+    ALL = 0
+    WITH_INFO = 1
+    WITHOUT_INFO = 2
+
+def get_items_by_filter(conn, items_filter: ItemsFilterByInfo):
+    items = []
+    match items_filter:
+        case ItemsFilterByInfo.WITHOUT_INFO:
+            items = conn.get_all_without_info()
+        case ItemsFilterByInfo.WITH_INFO:
+            items = conn.get_all_with_info()
+        case ItemsFilterByInfo.ALL:
+            items = conn.get_all()
+        case _:
+            raise ValueError("Invalid UpdateInfoItemsFilter value")
+    return items
 def get_db_class_by_config(database_config: dict):
     if database_config['TYPE'] == 'MYSQL':
         return WebScraperDBMySQL
