@@ -68,6 +68,7 @@ class WebScraperRequest:
     def scrape_items_infos(self, update=False, items_filter=ItemsFilterByInfo.WITHOUT_INFO):
         if self.parse_info_func is None:
             raise ParserNotSetException()
+        items = []
         with self.db_class(self.config['DATABASE']) as conn:
             items = get_items_by_filter(conn, items_filter)
         for item in items:
@@ -77,7 +78,7 @@ class WebScraperRequest:
                 print("FAILED GETTING INFO ", item['URL'])
                 continue
             info = self.parse_info_func(response)
-            if info:
+            if info is None:
                 print("NO INFO ", item['URL'])
                 continue
             with self.db_class(self.config['DATABASE']) as conn:
@@ -179,6 +180,7 @@ class WebScraperChrome:
     def scrape_items_infos(self, update=False, items_filter: ItemsFilterByInfo = ItemsFilterByInfo.WITHOUT_INFO):
         if self.parse_info_func is None:
             raise ParserNotSetException()
+        items = []
         with self.db_class(self.config['DATABASE']) as conn:
             items = get_items_by_filter(conn, items_filter)
         for item in items:

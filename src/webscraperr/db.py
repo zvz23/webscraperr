@@ -19,6 +19,7 @@ def get_items_by_filter(conn, items_filter: ItemsFilterByInfo):
         case _:
             raise ValueError("Invalid UpdateInfoItemsFilter value")
     return items
+
 def get_db_class_by_config(database_config: dict):
     if database_config['TYPE'] == 'MYSQL':
         return WebScraperDBMySQL
