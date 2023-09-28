@@ -33,7 +33,7 @@ def validate_config(config):
 
     if "OPTIONS" in driver_config and driver_config["OPTIONS"] is not None:
         if not isinstance(driver_config["OPTIONS"], ChromeOptions):
-            raise ValueError("DRIVER OPTIONS must be an instance of Option")
+            raise ValueError("DRIVER OPTIONS must be an instance of ChromeOptions")
     else:
         driver_config["OPTIONS"] = None
 
