@@ -4,7 +4,7 @@ from .exceptions import *
 from .driver import get_driver
 import requests
 import json
-import undetected_chromedriver as uc
+import seleniumwire.undetected_chromedriver as uc
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.action_chains import ActionChains
 import time
