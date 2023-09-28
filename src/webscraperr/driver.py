@@ -1,14 +1,14 @@
 import os
 import sys
-from seleniumwire.undetected_chromedriver.v2 import Chrome
+import seleniumwire.undetected_chromedriver as uc
     
 def get_driver(config: dict):
     profile_path = get_profile_path(config['PROFILE_NAME'])
     driver = None
     if config['OPTIONS']:
-        driver = Chrome(options=config['OPTIONS'], user_data_dir=profile_path, headless=config['HEADLESS'])
+        driver = uc.Chrome(options=config['OPTIONS'], user_data_dir=profile_path)
     else:
-        driver = Chrome(user_data_dir=profile_path, headless=config['HEADLESS'])
+        driver = uc.Chrome(user_data_dir=profile_path)
     driver.maximize_window()
     return driver
 
