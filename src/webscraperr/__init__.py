@@ -8,6 +8,16 @@ import undetected_chromedriver as uc
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.action_chains import ActionChains
 import time
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+stream_handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+stream_handler.setFormatter(formatter)
+
+logger.addHandler(stream_handler)
 
 def config_sleep(seconds: Union[float, None]):
     if seconds is not None:
@@ -36,31 +46,32 @@ class WebScraperRequest:
         for url in urls:
             next_page = url[:]
             while next_page:
-                print("SCRAPING URLS ", next_page)
+                logger.info("SCRAPING URLS %s", next_page)
                 response = self.session.get(next_page)
                 if not response.ok:
-                    print("FAILED GETTING URLS ", next_page)
+                    logger.error("FETCH FAILED %s", next_page)
                     continue
                 if self.get_items_urls_func:
                     items_urls = [[i] for i in self.get_items_urls_func(response)]
                     if items_urls:
                         with self.db_class(self.config['DATABASE']) as conn:
                             conn.save_urls(items_urls)
-                            print(f"FOUND {len(items_urls)} URLS IN", next_page)
+                            logger.info("FOUND %d URLS IN %s", len(items_urls), next_page)
                     else:
-                        print("NO URLS FOUND IN ", next_page)
+                        logger.info("NO URLS FOUND IN %s", next_page)
 
                 if self.get_items_urls_and_infos_func:
                     items_urls_and_infos = [[i[0], json.dumps(i[1])] for i in self.get_items_urls_and_infos_func(response)]
                     if items_urls_and_infos:
                         with self.db_class(self.config['DATABASE']) as conn:
                             conn.save_url_and_info_many(items_urls_and_infos)
-                            print(f"FOUND {len(items_urls_and_infos)} URLS AND INFOS IN ", url)
+                            logger.info("FOUND %d URLS AND INFOS IN %s", len(items_urls_and_infos), next_page)
                     else:
-                        print("NO URLS AND INFOS FOUND IN ", url)
+                        logger.info("NO URLS AND INFOS FOUND IN %s", next_page)
 
                 next_page = None
                 if self.get_next_page_func:
+                    logger.info("GOING TO NEXT PAGE %s", next_page)
                     next_page = self.get_next_page_func(response)
                     if next_page:
                         config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
@@ -72,20 +83,20 @@ class WebScraperRequest:
         with self.db_class(self.config['DATABASE']) as conn:
             items = get_items_by_filter(conn, items_filter)
         for item in items:
-            print("GETTING INFO ", item['URL'])
+            logger.info("GETTING INFO %s", item['URL'])
             response = self.session.get(item['URL'])
             if not response.ok:
-                print("FAILED GETTING INFO ", item['URL'])
+                logger.error("FETCH FAILED %s", item['URL'])
                 continue
             info = self.parse_info_func(response)
             if info is None:
-                print("NO INFO ", item['URL'])
+                logger.info("NO INFO %s", item['URL'])
                 continue
             with self.db_class(self.config['DATABASE']) as conn:
                 if update and item['INFO'] is not None:
                     info.update(json.loads(item['INFO']))
                 conn.set_info_by_id(item['ID'], json.dumps(info))
-                print("SAVED INFO ", item['URL'])
+                logger.info("INFO SAVED %s", item['URL'])
             config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
 
     def scrape_items_infos_key_url(self, key: str, parse_info_func: Callable[[requests.Response], Dict]):
@@ -95,25 +106,25 @@ class WebScraperRequest:
             for item in items:
                 info = json.loads(item['INFO'])
                 if key not in info:
-                    print("KEY NOT FOUND IN ", item['URL'])
+                    logger.error("KEY NOT FOUND IN %s", item['URL'])
                     continue
                 key_url = info.get(key)
                 if key_url is None:
-                    print("NO KEY VALUE ", item['URL'])
+                    logger.error("NO KEY VALUE %s", item['URL'])
                     continue                
-                print("GETTING KEY INFO ", item['URL'])
+                logger.info("GETTING KEY INFO %s", item['URL'])
                 response = self.session.get(key_url)
                 if not response.ok:
-                    print("FAILED GETTING KEY INFO ", item['URL'])
+                    logger.error("FETCH FAILED %s", key_url)
                     continue
                 key_info = parse_info_func(response)
                 if key_info is None:
-                    print("NO INFO ", key_url)
+                    logger.info("NO INFO %s", key_url)
                     continue
                 info.update(key_info)
                 with self.db_class(self.config['DATABASE']) as conn:
                     conn.set_info_by_id(item['ID'], json.dumps(info))
-                    print("SAVED INFO ", item['URL'])
+                    logger.info("INFO SAVED %s", item['URL'])
                 config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
 
 class WebScraperChrome:
@@ -134,43 +145,45 @@ class WebScraperChrome:
         try:
             self.driver.close()
         except:
-            print("There was a problem closing the chrome instances. You will need to close them manually")
+            logger.error("There was a problem closing the chrome instances. You will need to close them manually")
 
     def scrape_items_urls(self, urls: list):
         if self.get_items_urls_func is None and self.get_items_urls_and_infos_func is None:
             raise ParserNotSetException()
         
         for url in urls:
+            logger.info("SCRAPING URLS %s", url)
             self.driver.get(url)
             config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
             while True:
-                print("SCRAPING URLS", self.driver.current_url)
                 if self.get_items_urls_func:
                     items_urls = [[i] for i in self.get_items_urls_func(self.driver)]
                     if len(items_urls) > 0:
                         with self.db_class(self.config['DATABASE']) as conn:
                             conn.save_urls(items_urls)
-                            print(f"FOUND {len(items_urls)} URLS IN", url)
+                            logger.info("FOUND %d URLS IN %s", len(items_urls), self.driver.current_url)
                     else:
-                        print("NO URLS FOUND IN ", url)
+                        logger.info("NO URLS FOUND IN %s", url)
                 
                 if self.get_items_urls_and_infos_func:
                     items_urls_and_infos = [[i[0], json.dumps(i[1])] for i in self.get_items_urls_and_infos_func(self.driver)]
                     if len(items_urls_and_infos) > 0:
                         with self.db_class(self.config['DATABASE']) as conn:
                             conn.save_url_and_info_many(items_urls_and_infos)
-                            print(f"FOUND {len(items_urls_and_infos)} URLS AND INFOS IN ", url)
+                            logger.info("FOUND %d URLS AND INFOS IN %s", len(items_urls_and_infos), url)
                     else:
-                        print("NO URLS AND INFOS FOUND IN ", url)
+                        logger.info("NO URLS AND INFOS FOUND IN %s", url)
 
                 if self.get_next_page_func:
                     next_page = self.get_next_page_func(self.driver)
                     if isinstance(next_page, str):
+                        logger.info("GOING TO NEXT PAGE %s", next_page)
                         self.driver.get(next_page)
                         config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
                     elif isinstance(next_page, WebElement):
+                        logger.info("GOING TO NEXT PAGE ELEMENT %s", next_page.tag_name)
                         ActionChains(self.driver, 500).move_to_element(next_page).pause(0.4).click().perform()
-                        time.sleep(2)
+                        config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
                     else:
                         break
                     config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
@@ -184,18 +197,18 @@ class WebScraperChrome:
         with self.db_class(self.config['DATABASE']) as conn:
             items = get_items_by_filter(conn, items_filter)
         for item in items:
-            print("GETTING INFO ", item['URL'])
+            logger.info("GETTING INFO %s", item['URL'])
             self.driver.get(item['URL'])
             config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
             info = self.parse_info_func(self.driver)
             if info is None:
-                print("NO INFO ", item['URL'])
+                logger.info("NO INFO %s", item['URL'])
                 continue
             with self.db_class(self.config['DATABASE']) as conn:
                 if update and item['INFO'] is not None:
                     info.update(json.loads(item['INFO']))
                 conn.set_info_by_id(item['ID'], json.dumps(info))
-                print("SAVED INFO ", item['URL'])
+                logger.info("INFO SAVED %s", item['URL'])
             config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
 
     def scrape_items_infos_key_url(self, key: str, parse_info_func: Callable[[uc.Chrome], Dict]):
@@ -205,20 +218,20 @@ class WebScraperChrome:
             for item in items:
                 info = json.loads(item['INFO'])
                 if key not in info:
-                    print("KEY NOT FOUND IN ", item['URL'])
+                    logger.error("KEY NOT FOUND IN %s", item['URL'])
                     continue
                 key_url = info.get(key)
                 if key_url is None:
-                    print("NO KEY VALUE ", item['URL'])
+                    logger.error("NO KEY VALUE %s", item['URL'])
                     continue
-                print("GETTING KEY INFO ", item['URL'])
+                logger.info("GETTING KEY INFO %s", key_url)
                 self.driver.get(key_url)
                 config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
                 key_info = parse_info_func(self.driver)
                 if key_info is None:
-                    print("NO INFO ", key_url)
+                    logger.info("NO INFO %s", key_url)
                     continue
                 info.update(key_info)
                 with self.db_class(self.config['DATABASE']) as conn:
                     conn.set_info_by_id(item['ID'], json.dumps(info))
-                    print("SAVED INFO ", item['URL'])
+                    logger.info("INFO SAVED %s", item['URL'])
