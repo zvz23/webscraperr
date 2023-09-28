@@ -1,10 +1,9 @@
-from seleniumwire.undetected_chromedriver.v2 import ChromeOptions
+from seleniumwire.undetected_chromedriver import ChromeOptions
 
 def get_default_config():
     default_config = {
         "DRIVER": {
             "OPTIONS": None,
-            "HEADLESS": False,
             "PROFILE_NAME": "Test Profile",
             "AFTER_GET_DELAY": None
         },
@@ -36,12 +35,6 @@ def validate_config(config):
             raise ValueError("DRIVER OPTIONS must be an instance of ChromeOptions")
     else:
         driver_config["OPTIONS"] = None
-
-    if "HEADLESS" in driver_config:
-        if not isinstance(driver_config["HEADLESS"], bool):
-            raise ValueError("DRIVER HEADLESS must be a boolean")
-    else:
-        driver_config["HEADLESS"] = False
 
     if "PROFILE_NAME" in driver_config:
         if not isinstance(driver_config["PROFILE_NAME"], str) or not driver_config["PROFILE_NAME"]:
