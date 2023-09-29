@@ -55,7 +55,7 @@ def get_next_page_func(response):
     next_page_url = selector.css('a[rel="next"]::attr(href)').get()
     if next_page_url is not None:
         return urljoin(BASE_URL, next_page_url)
-    return None # must return None for the scraper to know that there is no next page
+    return None
 
 # The `parse_info_func` must return a `dict`.
 
