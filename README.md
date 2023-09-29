@@ -13,7 +13,7 @@ Install webscraperr with pip
 ```bash
     pip install webscraperr
 ```
-    ## Usage
+## Usage
 
 The configurations of the scraper is stored in a config dictionary. The config must be prepared, modified and validated before passing it to the scraper.
 ```python
