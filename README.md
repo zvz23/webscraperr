@@ -1,4 +1,19 @@
-## Usage
+
+# Webscraperr
+
+This Python library is designed to facilitate the common workflow of web scraping, particularly for e-commerce websites. It provides a structured framework where users can define their own logic for gathering product URLs, parsing individual product pages, and selecting the next page. The URLs and product info are saved directly to a database. It supports various databases such as SQLite and MySQL.
+
+
+
+
+## Installation
+
+Install webscraperr with pip
+
+```bash
+    pip install webscraperr
+```
+    ## Usage
 
 The configurations of the scraper is stored in a config dictionary. The config must be prepared, modified and validated before passing it to the scraper.
 ```python
@@ -63,3 +78,7 @@ with WebScraperRequest(config) as scraper:
     scraper.scrape_items_infos() # This will navigate to the product page and parse the html
 
 ```
+## Development Status
+
+Please note that this library is still under development and may be subject to changes. I am constantly working on improving its functionality, flexibility and performance. Your patience, feedback, and contributions are much appreciated.
+
