@@ -1,19 +1,3 @@
-
-# Webscraperr
-
-This Python library is designed to facilitate the common workflow of web scraping, particularly for e-commerce websites. It provides a structured framework where users can define their own logic for gathering product URLs, parsing individual product pages, and selecting the next page. The URLs and product info are saved directly to a database. It supports various databases such as SQLite and MySQL.
-
-
-
-
-## Installation
-
-Install webscraperr with pip
-
-```bash
-    pip install webscraperr
-```
-    
 ## Usage
 
 The configurations of the scraper is stored in a config dictionary. The config must be prepared, modified and validated before passing it to the scraper.
@@ -39,22 +23,29 @@ init_sqlite(config['DATABASE'])
 # This will create the database and the table
 ```
 
-For this example we are going to use `WebScraperRequest`. This scrapper will be using `requests` library for the http requests and `parsel` for parsing the html. You will need to define the functions for parsing the html.
+For this example we are going to use `WebScraperRequest`. This scrapper will be using `requests` library for the http requests. You will need to define the functions for parsing the html. There is also `WebScraperChrome` that uses `selenium-wire` and `undetected-chromedriver`.
 
 
 ```python
 from webscraperr import WebScraperRequest
 from urllib.parse import urljoin
+import parsel
 
 urls = ["https://webscraper.io/test-sites/e-commerce/static/computers/tablets"]
 
-def get_next_page_func(selector):
+# The `get_next_page_func` must return a url or None. If it returns None it means there is no next page
+
+def get_next_page_func(response):
+    selector = parsel.Selector(text=response.text) # in this example `parsel` is used for parsing the html
     next_page_url = selector.css('a[rel="next"]::attr(href)').get()
     if next_page_url is not None:
         return urljoin(BASE_URL, next_page_url)
     return None # must return None for the scraper to know that there is no next page
 
-def parse_info_func(selector):
+# The `parse_info_func` must return a `dict`.
+
+def parse_info_func(response):
+    selector = parsel.Selector(text=response.text)
     info = {
         'name': selector.css(".caption h4:nth-child(2)::text").get(),
         'price': selector.css(".caption .price::text").get()
@@ -72,10 +63,3 @@ with WebScraperRequest(config) as scraper:
     scraper.scrape_items_infos() # This will navigate to the product page and parse the html
 
 ```
-
-
-
-## Development Status
-
-Please note that this library is still under development and may be subject to changes. I am constantly working on improving its functionality, flexibility and performance. Your patience, feedback, and contributions are much appreciated.
-
