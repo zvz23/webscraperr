@@ -1,4 +1,5 @@
 from seleniumwire.undetected_chromedriver import ChromeOptions
+from .db import DBTypes
 
 def get_default_config():
     default_config = {
@@ -8,7 +9,7 @@ def get_default_config():
             "AFTER_GET_DELAY": None
         },
         "DATABASE": {
-            "TYPE": "SQLITE",
+            "TYPE": DBTypes.SQLITE,
             "AUTH": {
                 "user": "",
                 "password": "",
@@ -58,11 +59,11 @@ def validate_config(config):
     if not isinstance(database_config, dict):
         raise ValueError("Invalid DATABASE configuration")
 
-    database_type = database_config.get("TYPE", "")
-    if database_type not in ["MYSQL", "SQLITE"]:
-        raise ValueError("DATABASE TYPE must be 'MYSQL' or 'SQLITE'")
+    database_type = database_config.get("TYPE", DBTypes.SQLITE)
+    if not isinstance(database_type, DBTypes):
+        raise ValueError(f"DATABASE TYPE must be {DBTypes.__name__}")
 
-    if database_type == "MYSQL":
+    if database_type == DBTypes.MYSQL:
         auth = database_config.get("AUTH", {})
         if not isinstance(auth, dict):
             raise ValueError("DATABASE AUTH must be a dictionary")

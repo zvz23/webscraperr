@@ -7,7 +7,7 @@ class DatabaseAuthenticationNotSet(Exception):
         super().__init__(message)
 
 class DatabaseNotSupportedException(Exception):
-    def __init__(self, message="Database type is not supported. Use MYSQL OR SQLITE."):
+    def __init__(self, message="Database type is not supported."):
         super().__init__(message)
 
 class ParserNotSetException(Exception):

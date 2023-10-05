@@ -1,11 +1,16 @@
 import sqlite3
 from mysql.connector import connect
-from enum import IntEnum
+from enum import IntEnum, StrEnum
+from .exceptions import DatabaseNotSupportedException
 
 class ItemsFilterByInfo(IntEnum):
     ALL = 0
     WITH_INFO = 1
     WITHOUT_INFO = 2
+
+class DBTypes(StrEnum):
+    SQLITE = 'SQLITE',
+    MYSQL = 'MYSQL'
 
 def get_items_by_filter(conn, items_filter: ItemsFilterByInfo):
     items = []
@@ -21,10 +26,12 @@ def get_items_by_filter(conn, items_filter: ItemsFilterByInfo):
     return items
 
 def get_db_class_by_config(database_config: dict):
-    if database_config['TYPE'] == 'MYSQL':
+    if database_config['TYPE'] == DBTypes.MYSQL:
         return WebScraperDBMySQL
-    elif database_config['TYPE'] == 'SQLITE':
+    elif database_config['TYPE'] == DBTypes.SQLITE:
         return WebScraperDBSqlite
+    else:
+        raise DatabaseNotSupportedException()
 
 def init_mysql(database_config: dict):
     temp_auth = database_config['AUTH'].copy()
