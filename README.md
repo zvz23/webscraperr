@@ -17,10 +17,10 @@ Install webscraperr with pip
 
 The configurations of the scraper is stored in a config dictionary. The config must be prepared, modified and validated before passing it to the scraper.
 ```python
-from webscraperr.config import get_default_config, validate_config
+from webscraperr.config import get_default_config, validate_config, DBTypes
 
 config = get_default_config()
-config['DATABASE']['TYPE'] = 'SQLITE'
+config['DATABASE']['TYPE'] = DBTypes.SQLITE
 config['DATABASE']['DATABASE'] = 'mydatabase.db'
 config['DATABASE']['TABLE'] = 'products' # If TABLE is not set "items" will be the defaut table name
 config['SCRAPER']['REQUEST_DELAY'] = 1.6
