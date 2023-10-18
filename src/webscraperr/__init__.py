@@ -48,6 +48,7 @@ class WebScraperRequest:
             while next_page:
                 logger.info("SCRAPING URLS %s", next_page)
                 response = self.session.get(next_page)
+                config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
                 if not response.ok:
                     logger.error("FETCH FAILED %s", next_page)
                     continue
@@ -72,9 +73,7 @@ class WebScraperRequest:
                 next_page = None
                 if self.get_next_page_func:
                     logger.info("GOING TO NEXT PAGE %s", next_page)
-                    next_page = self.get_next_page_func(response)
-                    if next_page:
-                        config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
+                    next_page = self.get_next_page_func(response)                      
     
     def scrape_items_infos(self, update=False, items_filter=ItemsFilterByInfo.WITHOUT_INFO):
         if self.parse_info_func is None:
@@ -85,6 +84,7 @@ class WebScraperRequest:
         for item in items:
             logger.info("GETTING INFO %s", item['URL'])
             response = self.session.get(item['URL'])
+            config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
             if not response.ok:
                 logger.error("FETCH FAILED %s", item['URL'])
                 continue
@@ -97,7 +97,6 @@ class WebScraperRequest:
                     info.update(json.loads(item['INFO']))
                 conn.set_info_by_id(item['ID'], json.dumps(info))
                 logger.info("INFO SAVED %s", item['URL'])
-            config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
 
     def scrape_items_infos_key_url(self, key: str, parse_info_func: Callable[[requests.Response], Dict]):
         items = []
@@ -114,6 +113,7 @@ class WebScraperRequest:
                     continue                
                 logger.info("GETTING KEY INFO %s", item['URL'])
                 response = self.session.get(key_url)
+                config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
                 if not response.ok:
                     logger.error("FETCH FAILED %s", key_url)
                     continue
@@ -125,7 +125,6 @@ class WebScraperRequest:
                 with self.db_class(self.config['DATABASE']) as conn:
                     conn.set_info_by_id(item['ID'], json.dumps(info))
                     logger.info("INFO SAVED %s", item['URL'])
-                config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
 
 class WebScraperChrome:
     def __init__(self, config: dict):
@@ -154,8 +153,8 @@ class WebScraperChrome:
         for url in urls:
             logger.info("SCRAPING URLS %s", url)
             self.driver.get(url)
-            config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
             while True:
+                config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
                 if self.get_items_urls_func:
                     items_urls = [[i] for i in self.get_items_urls_func(self.driver)]
                     if len(items_urls) > 0:
@@ -179,14 +178,11 @@ class WebScraperChrome:
                     if isinstance(next_page, str):
                         logger.info("GOING TO NEXT PAGE %s", next_page)
                         self.driver.get(next_page)
-                        config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
                     elif isinstance(next_page, WebElement):
                         logger.info("GOING TO NEXT PAGE ELEMENT %s", next_page.tag_name)
-                        ActionChains(self.driver, 500).move_to_element(next_page).pause(0.4).click().perform()
-                        config_sleep(self.config['DRIVER']['AFTER_GET_DELAY'])
+                        ActionChains(self.driver, 500).move_to_element(next_page).pause(0.5).click().perform()
                     else:
                         break
-                    config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
                 else:
                     break
                             
@@ -209,7 +205,6 @@ class WebScraperChrome:
                     info.update(json.loads(item['INFO']))
                 conn.set_info_by_id(item['ID'], json.dumps(info))
                 logger.info("INFO SAVED %s", item['URL'])
-            config_sleep(self.config['SCRAPER']['REQUEST_DELAY'])
 
     def scrape_items_infos_key_url(self, key: str, parse_info_func: Callable[[uc.Chrome], Dict]):
         items = []
