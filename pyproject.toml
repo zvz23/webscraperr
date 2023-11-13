@@ -12,7 +12,7 @@ dependencies = [
   'selenium-wire',
   'undetected-chromedriver'
 ]
-version = "0.1.6"
+version = "0.1.7"
 authors = [
   { name="Ziegfred Zorrilla", email="ziegfredzorrilla23@gmail.com" },
 ]
