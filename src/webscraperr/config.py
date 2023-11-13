@@ -5,7 +5,6 @@ def get_default_config():
     default_config = {
         "DRIVER": {
             "OPTIONS": None,
-            "PROFILE_NAME": "Test Profile",
             "AFTER_GET_DELAY": None
         },
         "DATABASE": {
@@ -36,12 +35,6 @@ def validate_config(config):
             raise ValueError("DRIVER OPTIONS must be an instance of ChromeOptions")
     else:
         driver_config["OPTIONS"] = None
-
-    if "PROFILE_NAME" in driver_config:
-        if not isinstance(driver_config["PROFILE_NAME"], str) or not driver_config["PROFILE_NAME"]:
-            raise ValueError("DRIVER PROFILE_NAME must be a string")
-    else:
-        driver_config["PROFILE_NAME"] = "Test Profile"
 
     if "AFTER_GET_DELAY" in driver_config:
         after_get_delay = driver_config.get('AFTER_GET_DELAY')
